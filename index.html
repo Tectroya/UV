@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UV: El Gestor de Paquetes del Futuro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --accent: #f97316;
+    --accent2: #fb923c;
+    --purple: #a855f7;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --text: #f1f0f5;
+    --muted: #6b6a80;
+    --border: #2a2a3d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 5rem 0 3rem;
+    position: relative;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(249,115,22,0.12);
+    border: 1px solid rgba(249,115,22,0.3);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  .hero-badge span { color: var(--muted); }
+
+  .hero h1 {
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    margin-bottom: 2.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 0.25rem;
+    letter-spacing: 0.08em;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+    margin: 3rem 0;
+  }
+
+  /* SECTION TITLES */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+  }
+
+  /* MODULES */
+  .modules {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    margin-bottom: 4rem;
+  }
+
+  .module {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .module:hover { border-color: var(--accent); }
+
+  .module-accent-line {
+    height: 3px;
+    width: 100%;
+  }
+
+  .module-header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .module-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    padding: 0.35rem 0.7rem;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+  }
+
+  .module-info { flex: 1; }
+
+  .module-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+  }
+
+  .module-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+
+  .module-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+  }
+
+  .module-videos {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .episodes {
+    padding: 0;
+  }
+
+  .episode {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .episode:last-child { border-bottom: none; }
+  .episode:hover { background: var(--surface2); }
+
+  .ep-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    flex-shrink: 0;
+    padding-top: 0.2rem;
+    min-width: 2.5rem;
+  }
+
+  .ep-content { flex: 1; }
+
+  .ep-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.01em;
+  }
+
+  .ep-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .ep-duration {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    flex-shrink: 0;
+    padding-top: 0.2rem;
+    background: var(--surface2);
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    margin-top: 0.1rem;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    margin-top: 0.4rem;
+    margin-right: 0.3rem;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  .tag-pip { background: rgba(59,130,246,0.1); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+  .tag-new { background: rgba(34,197,94,0.1); color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+  .tag-demo { background: rgba(168,85,247,0.1); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.2); }
+  .tag-bonus { background: rgba(249,115,22,0.1); color: #fdba74; border: 1px solid rgba(249,115,22,0.2); }
+
+  /* MODULE COLORS */
+  .m1 .module-accent-line { background: linear-gradient(90deg, #f97316, #fb923c); }
+  .m1 .module-num { background: rgba(249,115,22,0.15); color: var(--accent); border: 1px solid rgba(249,115,22,0.3); }
+
+  .m2 .module-accent-line { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+  .m2 .module-num { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+  .m2 .module-title { color: #93c5fd; }
+
+  .m3 .module-accent-line { background: linear-gradient(90deg, #a855f7, #c084fc); }
+  .m3 .module-num { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+  .m3 .module-title { color: #d8b4fe; }
+
+  .m4 .module-accent-line { background: linear-gradient(90deg, #22c55e, #4ade80); }
+  .m4 .module-num { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .m4 .module-title { color: #86efac; }
+
+  .m5 .module-accent-line { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+  .m5 .module-num { background: rgba(244,63,94,0.15); color: #fb7185; border: 1px solid rgba(244,63,94,0.3); }
+  .m5 .module-title { color: #fda4af; }
+
+  /* FOOTER NOTE */
+  .footer-note {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 1.5rem 2rem;
+    margin-bottom: 4rem;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .footer-note h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--accent);
+  }
+
+  .footer-note p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  .footer-note ul {
+    list-style: none;
+    margin-top: 0.75rem;
+  }
+
+  .footer-note ul li {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    padding: 0.2rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .footer-note ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  /* GLOW */
+  .glow-orb {
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @media (max-width: 640px) {
+    .module-header { flex-wrap: wrap; }
+    .module-meta { margin-top: 0.75rem; }
+    .hero-stats { gap: 1.5rem; }
+    .episode { gap: 0.75rem; }
+    .ep-duration { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="glow-orb"></div>
+
+<div class="container">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-badge">
+      <span>$</span> pip install uv  →  <span>$</span> uv add uv
+    </div>
+    <h1>UV:<br><em>El Gestor de<br>Paquetes del Futuro</em></h1>
+    <p class="hero-sub">// Curso completo · Python moderno · Del zero al deploy</p>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num">5</span>
+        <span class="stat-label">MÓDULOS</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">18</span>
+        <span class="stat-label">VIDEOS</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">~3h</span>
+        <span class="stat-label">DURACIÓN TOTAL</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">10x</span>
+        <span class="stat-label">MÁS RÁPIDO QUE PIP</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- MODULES -->
+  <section>
+    <p class="section-label">// ESTRUCTURA DEL CURSO</p>
+    <h2 class="section-title">Todos los módulos</h2>
+
+    <div class="modules">
+
+      <!-- M1 -->
+      <div class="module m1">
+        <div class="module-accent-line"></div>
+        <div class="module-header">
+          <span class="module-num">MOD 01</span>
+          <div class="module-info">
+            <div class="module-title">Bienvenido al mundo de UV</div>
+            <div class="module-desc">¿Qué es UV, de dónde viene y por qué está revolucionando el ecosistema Python?</div>
+          </div>
+          <div class="module-meta">
+            <span class="module-videos">3 videos</span>
+          </div>
+        </div>
+        <div class="episodes">
+          <div class="episode">
+            <span class="ep-num">E01</span>
+            <div class="ep-content">
+              <div class="ep-title">¿Qué es UV y por qué debería importarte?</div>
+              <div class="ep-desc">Presentación del curso. Qué problema resuelve UV, quién lo creó (Astral) y el contexto del ecosistema Python actual.</div>
+              <span class="tag tag-new">INTRO</span>
+            </div>
+            <span class="ep-duration">~8 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E02</span>
+            <div class="ep-content">
+              <div class="ep-title">Instalación en Windows, macOS y Linux</div>
+              <div class="ep-desc">Instalación paso a paso en los tres sistemas operativos. Verificación de la instalación y primeros comandos.</div>
+              <span class="tag tag-demo">DEMO</span>
+            </div>
+            <span class="ep-duration">~10 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E03</span>
+            <div class="ep-content">
+              <div class="ep-title">UV vs pip, Poetry y Conda — La gran comparativa</div>
+              <div class="ep-desc">Benchmark de velocidad real. Comparativa de comandos equivalentes. ¿Cuándo usar cada herramienta?</div>
+              <span class="tag tag-pip">VS PIP</span>
+              <span class="tag tag-demo">DEMO</span>
+            </div>
+            <span class="ep-duration">~12 min</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- M2 -->
+      <div class="module m2">
+        <div class="module-accent-line"></div>
+        <div class="module-header">
+          <span class="module-num">MOD 02</span>
+          <div class="module-info">
+            <div class="module-title" style="color:#93c5fd">Entornos virtuales y gestión de Python</div>
+            <div class="module-desc">UV no solo instala paquetes: también gestiona versiones de Python sin necesidad de pyenv.</div>
+          </div>
+          <div class="module-meta">
+            <span class="module-videos">4 videos</span>
+          </div>
+        </div>
+        <div class="episodes">
+          <div class="episode">
+            <span class="ep-num">E04</span>
+            <div class="ep-content">
+              <div class="ep-title">Crear y activar entornos virtuales con UV</div>
+              <div class="ep-desc">uv venv en detalle. Diferencias con python -m venv y virtualenv. Activación en distintos sistemas.</div>
+              <span class="tag tag-pip">VS PIP</span>
+            </div>
+            <span class="ep-duration">~9 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E05</span>
+            <div class="ep-content">
+              <div class="ep-title">Gestión de versiones de Python con UV</div>
+              <div class="ep-desc">uv python install, uv python list, pin de versiones por proyecto. Adiós a pyenv para la mayoría de casos.</div>
+              <span class="tag tag-new">FEATURE</span>
+            </div>
+            <span class="ep-duration">~10 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E06</span>
+            <div class="ep-content">
+              <div class="ep-title">Instalar, actualizar y desinstalar paquetes</div>
+              <div class="ep-desc">uv add, uv remove, uv sync. El equivalente de pip install pero con superpoderes. Lock files automáticos.</div>
+              <span class="tag tag-pip">VS PIP</span>
+              <span class="tag tag-demo">DEMO</span>
+            </div>
+            <span class="ep-duration">~11 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E07</span>
+            <div class="ep-content">
+              <div class="ep-title">El archivo uv.lock — Reproducibilidad garantizada</div>
+              <div class="ep-desc">Qué es el lock file, por qué importa, cómo commitearlo en Git. Comparativa con requirements.txt y poetry.lock.</div>
+              <span class="tag tag-new">CONCEPTO CLAVE</span>
+            </div>
+            <span class="ep-duration">~10 min</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- M3 -->
+      <div class="module m3">
+        <div class="module-accent-line"></div>
+        <div class="module-header">
+          <span class="module-num">MOD 03</span>
+          <div class="module-info">
+            <div class="module-title">Proyectos reales con UV</div>
+            <div class="module-desc">De scripts sueltos a proyectos estructurados con pyproject.toml como estándar moderno.</div>
+          </div>
+          <div class="module-meta">
+            <span class="module-videos">4 videos</span>
+          </div>
+        </div>
+        <div class="episodes">
+          <div class="episode">
+            <span class="ep-num">E08</span>
+            <div class="ep-content">
+              <div class="ep-title">uv init — Crear un proyecto desde cero</div>
+              <div class="ep-desc">Estructura de un proyecto UV moderno. pyproject.toml explicado línea a línea. Diferencias con setup.py del pasado.</div>
+              <span class="tag tag-demo">DEMO</span>
+            </div>
+            <span class="ep-duration">~10 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E09</span>
+            <div class="ep-content">
+              <div class="ep-title">Dependencias de desarrollo vs producción</div>
+              <div class="ep-desc">Grupos de dependencias: dev, test, docs. uv add --dev. Cómo separar lo que va al servidor de lo que queda local.</div>
+              <span class="tag tag-pip">VS PIP</span>
+              <span class="tag tag-new">BUENAS PRÁCTICAS</span>
+            </div>
+            <span class="ep-duration">~9 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E10</span>
+            <div class="ep-content">
+              <div class="ep-title">Ejecutar scripts y comandos con uv run</div>
+              <div class="ep-desc">uv run como alternativa a activar el entorno. Ejecutar pytest, scripts, herramientas directamente. Scripts con dependencias inline.</div>
+              <span class="tag tag-demo">DEMO</span>
+              <span class="tag tag-new">FEATURE</span>
+            </div>
+            <span class="ep-duration">~11 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E11</span>
+            <div class="ep-content">
+              <div class="ep-title">Migrar un proyecto existente de pip a UV</div>
+              <div class="ep-desc">Paso a paso: proyecto con requirements.txt → UV moderno. Casos reales, errores comunes y cómo resolverlos.</div>
+              <span class="tag tag-pip">MIGRACIÓN</span>
+              <span class="tag tag-demo">DEMO</span>
+            </div>
+            <span class="ep-duration">~12 min</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- M4 -->
+      <div class="module m4">
+        <div class="module-accent-line"></div>
+        <div class="module-header">
+          <span class="module-num">MOD 04</span>
+          <div class="module-info">
+            <div class="module-title">UV en el mundo real — CI/CD y equipos</div>
+            <div class="module-desc">Llevar UV más allá del desarrollo local: automatización, contenedores y trabajo colaborativo.</div>
+          </div>
+          <div class="module-meta">
+            <span class="module-videos">4 videos</span>
+          </div>
+        </div>
+        <div class="episodes">
+          <div class="episode">
+            <span class="ep-num">E12</span>
+            <div class="ep-content">
+              <div class="ep-title">UV con GitHub Actions — CI ultrarrápido</div>
+              <div class="ep-desc">Setup de CI con UV. astral-sh/setup-uv action. Caché de dependencias. Pipelines que tardan segundos, no minutos.</div>
+              <span class="tag tag-demo">DEMO</span>
+            </div>
+            <span class="ep-duration">~11 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E13</span>
+            <div class="ep-content">
+              <div class="ep-title">UV + Docker — Imágenes más ligeras y rápidas</div>
+              <div class="ep-desc">Dockerfile con UV. Multi-stage builds. Por qué UV mejora drásticamente el tiempo de build en contenedores.</div>
+              <span class="tag tag-demo">DEMO</span>
+              <span class="tag tag-new">AVANZADO</span>
+            </div>
+            <span class="ep-duration">~12 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E14</span>
+            <div class="ep-content">
+              <div class="ep-title">Herramientas globales con uvx</div>
+              <div class="ep-desc">uvx como reemplazo de pipx. Ejecutar herramientas sin instalarlas permanentemente. ruff, black, httpie y más.</div>
+              <span class="tag tag-new">FEATURE</span>
+              <span class="tag tag-pip">VS PIPX</span>
+            </div>
+            <span class="ep-duration">~9 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E15</span>
+            <div class="ep-content">
+              <div class="ep-title">Workspaces — Monorepos con UV</div>
+              <div class="ep-desc">Gestionar múltiples paquetes relacionados en un solo repositorio. Ideal para proyectos grandes o librerías con extras.</div>
+              <span class="tag tag-new">AVANZADO</span>
+            </div>
+            <span class="ep-duration">~11 min</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- M5 -->
+      <div class="module m5">
+        <div class="module-accent-line"></div>
+        <div class="module-header">
+          <span class="module-num">MOD 05</span>
+          <div class="module-info">
+            <div class="module-title">Proyecto final y próximos pasos</div>
+            <div class="module-desc">Consolidar todo lo aprendido construyendo y publicando un paquete Python real con UV.</div>
+          </div>
+          <div class="module-meta">
+            <span class="module-videos">3 videos</span>
+          </div>
+        </div>
+        <div class="episodes">
+          <div class="episode">
+            <span class="ep-num">E16</span>
+            <div class="ep-content">
+              <div class="ep-title">Construir y publicar tu paquete en PyPI con UV</div>
+              <div class="ep-desc">uv build, uv publish. De código local a paquete instalable en el mundo. Configuración en pyproject.toml para distribución.</div>
+              <span class="tag tag-demo">PROYECTO FINAL</span>
+            </div>
+            <span class="ep-duration">~12 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E17</span>
+            <div class="ep-content">
+              <div class="ep-title">Tips, trucos y configuración avanzada</div>
+              <div class="ep-desc">Variables de entorno UV, UV_CACHE_DIR, fuentes de paquetes privadas, uv.toml global. Todo lo que no cabe en los otros videos.</div>
+              <span class="tag tag-bonus">BONUS</span>
+            </div>
+            <span class="ep-duration">~10 min</span>
+          </div>
+          <div class="episode">
+            <span class="ep-num">E18</span>
+            <div class="ep-content">
+              <div class="ep-title">El futuro de UV y cierre del curso</div>
+              <div class="ep-desc">Roadmap de UV, integración con Ruff y el ecosistema Astral. Resumen del curso y recursos para seguir aprendiendo.</div>
+              <span class="tag tag-new">CIERRE</span>
+              <span class="tag tag-bonus">RECURSOS</span>
+            </div>
+            <span class="ep-duration">~8 min</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER NOTE -->
+    <div class="footer-note">
+      <h3>💡 Sugerencias para la producción</h3>
+      <p>Algunas ideas para que el curso destaque en YouTube:</p>
+      <ul>
+        <li>Abre cada video con un benchmark en tiempo real (pip vs UV). El impacto visual engancha al espectador en los primeros 30 segundos.</li>
+        <li>Usa una terminal con tema oscuro y tipografía grande — JetBrains Mono o Fira Code son ideales para screencasts.</li>
+        <li>El módulo 3 (E11 Migración) suele ser el video más buscado en Google — optimiza el título con SEO como "migrar pip a uv 2025".</li>
+        <li>Puedes lanzar los módulos 1-3 juntos y M4-M5 como semanas 2 y 3 para mantener el algoritmo activo.</li>
+        <li>El nombre alternativo más corto para thumbnails: <strong>"UV para Pythonistas"</strong></li>
+      </ul>
+    </div>
+
+  </section>
+
+</div>
+</body>
+</html>
