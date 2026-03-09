@@ -13,7 +13,7 @@
 
 | # | Episodio | Duración | Tags |
 |---|----------|----------|------|
-| E01 | ¿Qué es UV y por qué debería importarte? | ~8 min | `INTRO` |
+| E01 | ¿Qué es UV y por qué debería importarte? | ~4:46 min | `INTRO` |
 | E02 | [Instalación en Windows, macOS y Linux](https://github.com/Tectroya/UV/blob/main/MOD%2001/E02-Instalaci%C3%B3n%20en%20Windows%2C%20macOS%20y%20Linux.md) | ~10 min | `DEMO` |
 | E03 | UV vs pip, Poetry y Conda — La gran comparativa | ~12 min | `VS PIP` `DEMO` |
 
