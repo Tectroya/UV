@@ -4,6 +4,8 @@
 
 **5 módulos · 18 videos · 3h de duración · 10x más rápido que pip**
 
+🎬 [Ver el curso completo en YouTube](https://bit.ly/3P0lzmj)
+
 ---
 
 ## 📚 Estructura del Curso
@@ -14,7 +16,7 @@
 | # | Episodio | Duración | Tags |
 |---|----------|----------|------|
 | E01 | ¿Qué es UV y por qué debería importarte? | 4:46 min | `INTRO` |
-| E02 | [Instalación en Windows, macOS y Linux](https://github.com/Tectroya/UV/blob/main/MOD%2001/E02-Instalaci%C3%B3n%20en%20Windows%2C%20macOS%20y%20Linux.md) | 10 min | `DEMO` |
+| E02 | [Instalación en Windows, macOS y Linux](https://github.com/Tectroya/UV/blob/main/MOD%2001/E02-Instalaci%C3%B3n%20en%20Windows%2C%20macOS%20y%20Linux.md) | 6:59 min | `DEMO` |
 | E03 | UV vs pip, Poetry y Conda — La gran comparativa | 12 min | `VS PIP` `DEMO` |
 
 ---
