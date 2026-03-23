@@ -26,7 +26,7 @@
 
 | # | Episodio | Duración | Tags |
 |---|----------|----------|------|
-| E04 | Crear y activar entornos virtuales con UV | 9 min | `VS PIP` |
+| E04 | Crear y activar entornos virtuales con UV | 13:10 min | `VS PIP` |
 | E05 | Gestión de versiones de Python con UV | 10 min | `FEATURE` |
 | E06 | Instalar, actualizar y desinstalar paquetes | 11 min | `VS PIP` `DEMO` |
 | E07 | El archivo uv.lock — Reproducibilidad garantizada | 10 min | `CONCEPTO CLAVE` |
